@@ -1,54 +1,48 @@
 using UnityEngine;
 
-public class ScreenShakeManager : MonoBehaviour
+public class ScreenShakeManager : Singleton<ScreenShakeManager>
 {
-    [SerializeField] Camera mainCamera = null;
+    [SerializeField] Camera shakedCamera = null;
 
-    private float globalShakeAmount = 0f;
+    private float _globalShakeAmount;
 
-    private float tempShakeAmount = 0f;
-    private float tempShakeTimer = 0f;
-
-    private static ScreenShakeManager instance;
+    private float _tempShakeAmount;
+    private float _tempShakeTimer;
 
     public static void SetGlobalShake(float value)
     {
-        instance.globalShakeAmount = value;
+        _instance._globalShakeAmount = value;
     }
 
     public static void SetTempShake(float value, float time)
     {
-        instance.tempShakeAmount = value;
-        instance.tempShakeTimer = time;
-    }
-
-    private void Awake()
-    {
-        if (instance != null)
-        {
-            Destroy(gameObject);
-        }
-        else
-        {
-            instance = this;
-        }
+        _instance._tempShakeAmount = value;
+        _instance._tempShakeTimer = time;
     }
 
     private void Update()
     {
-        var shakeAmount = globalShakeAmount;
+        var shakeAmount = _globalShakeAmount;
 
-        if (tempShakeTimer > 0)
+        if (_tempShakeTimer > 0)
         {
-            tempShakeTimer -= Time.deltaTime;
+            _tempShakeTimer -= Time.deltaTime;
 
-            shakeAmount += tempShakeAmount * tempShakeTimer;
+            shakeAmount += _tempShakeAmount * _tempShakeTimer;
         }
         else
         {
-            tempShakeTimer = 0f;
+            _tempShakeTimer = 0f;
         }
 
-        mainCamera.transform.localPosition = new Vector3(Random.Range(-1f, 1f) * shakeAmount, Random.Range(-1f, 1f) * shakeAmount, mainCamera.transform.localPosition.z);
+        if (shakedCamera == null)
+        {
+            shakedCamera = Camera.main;
+        }
+
+        shakedCamera.transform.localPosition = new Vector3(
+            Random.Range(-1f, 1f) * shakeAmount, 
+            Random.Range(-1f, 1f) * shakeAmount, 
+            shakedCamera.transform.localPosition.z);
     }
 }

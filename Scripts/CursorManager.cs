@@ -1,38 +1,22 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public class CursorManager : MonoBehaviour
+public class CursorManager : Singleton<CursorManager>
 {
-    private static CursorManager instance;
-
     [Header("Normal")]
-    [SerializeField] private Texture2D normalCursor = null;
-    [SerializeField] private Vector2 normalHotSpot = Vector2.zero;
+    [SerializeField] private Texture2D _normalCursor = null;
+    [SerializeField] private Vector2 _normalHotSpot = Vector2.zero;
 
-    private CursorMode cursorMode = CursorMode.ForceSoftware;
-
-    private void Awake()
-    {
-        if (instance != null && instance != this)
-        {
-            Destroy(this.gameObject);
-        }
-        else
-        {
-            instance = this;
-        }
-    }
+    private CursorMode _cursorMode = CursorMode.ForceSoftware;
 
     private void Start()
     {
-        setCursorToNormal();
+        SetCursorToNormal();
     }
 
-    public static void setCursorToNormal()
+    public static void SetCursorToNormal()
     {
         Cursor.visible = true;
-        Cursor.SetCursor(instance.normalCursor, instance.normalHotSpot, instance.cursorMode);
+        Cursor.SetCursor(_instance._normalCursor, _instance._normalHotSpot, _instance._cursorMode);
     }
 
     public static void SetCursorToEmpty()

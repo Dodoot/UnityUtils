@@ -1,19 +1,21 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(AudioSource))]
 public class MusicAndSoundManager : MonoBehaviour
 {
-    // Parameters
-    [SerializeField] Sound[] soundsArray = null;
+    // Serialize Fields
+    [SerializeField] private Sound[] _sounds = null;
 
-    // Variables and cached references
-    string[] availableSoundNames = null;
-    AudioSource myAudioSource = null;
-    float initialMusicVolume = 0.5f;
+    // Privates
+    private string[] _availableSoundNames = null;
+    private AudioSource _audioSource = null;
+    private AudioListener _audioListener = null;
+    private float _initialMusicVolume = 0.5f;
 
-    static MusicAndSoundManager instance;
+    // Static
+    private static MusicAndSoundManager _instance;
 
     // Unity methods
     private void Awake()
@@ -42,92 +44,107 @@ public class MusicAndSoundManager : MonoBehaviour
                         Destroy(manager.gameObject);
                     }
                 }
-                instance = this;
+                _instance = this;
                 DontDestroyOnLoad(gameObject);
             }
         }
         else if (allManagers.Length == 1)
         {
-            instance = this;
+            _instance = this;
             DontDestroyOnLoad(gameObject);
         }
     }
 
     private void Start()
     {
-        myAudioSource = GetComponent<AudioSource>();
-        initialMusicVolume = myAudioSource.volume;
+        _audioSource = GetComponent<AudioSource>();
+        _initialMusicVolume = _audioSource.volume;
 
         AdjustMusicVolume();
 
-        availableSoundNames = new string[soundsArray.Length];
-        for (int i = 0; i < soundsArray.Length; i++)
+        _availableSoundNames = new string[_sounds.Length];
+        for (int i = 0; i < _sounds.Length; i++)
         {
-            availableSoundNames[i] = soundsArray[i].name;
+            _availableSoundNames[i] = _sounds[i].name;
         }
     }
 
-    // Public methods
-    public void TriggeredUpdate()
+    // Public static methods
+    public static void TriggeredUpdate()
     {
-        AdjustMusicVolume();
+        _instance.AdjustMusicVolume();
     }
 
     public static void PlayMusic()
     {
-        instance.myAudioSource.Play();
+        _instance._audioSource.Play();
     }
 
-    public static void ResetMusic()
+    public static void StopMusic()
     {
-        instance.myAudioSource.Stop();
+        _instance._audioSource.Stop();
     }
 
-    public static void FadeOutMusic()
+    public static void FadeOutMusic(float time)
     {
-        instance.StartCoroutine(instance.FadeOutMusicCoroutine());
+        _instance.StartCoroutine(_instance.FadeMusicCoroutine(0, time));
     }
 
-    private IEnumerator FadeOutMusicCoroutine()
+    public static void FadeInMusic(float time)
     {
-        var timer = 5f;
-        var initialVolume = myAudioSource.volume;
-        while (timer > 0)
+        _instance.StartCoroutine(_instance.FadeMusicCoroutine(_instance._initialMusicVolume, time));
+    }
+
+    public static void PlaySound(string soundName)
+    {
+        if (_instance._audioListener == null)
         {
-            timer -= Time.deltaTime;
-            myAudioSource.volume = timer / 5f * initialVolume;
-            yield return new WaitForEndOfFrame();
+            _instance._audioListener = FindObjectOfType<AudioListener>();
         }
+
+        PlaySound(soundName, _instance._audioListener.transform.position);
     }
 
-    public static void PlaySound(string soundToPlayName)
+    public static void PlaySound(string soundName, Vector3 position)
     {
-        int soundIndex = Array.IndexOf(instance.availableSoundNames, soundToPlayName);
+        int soundIndex = Array.IndexOf(_instance._availableSoundNames, soundName);
 
-        if (soundIndex == -1) { Debug.Log("No sound named: " + soundToPlayName); }
+        if (soundIndex == -1)
+        {
+            Debug.Log("No sound named: " + soundName);
+        }
         else
         {
-            Sound soundToPlay = instance.soundsArray[soundIndex];
-            bool isSoundOn = PlayerPrefsController.GetSoundOn() != 0;
-            float volumeToPlay = isSoundOn ? soundToPlay.GetSoundVolume() : 0f;
-            AudioSource.PlayClipAtPoint(
-                soundToPlay.GetSoundClip(),
-                FindObjectOfType<AudioListener>().transform.position,
-                volumeToPlay);
+            Sound sound = _instance._sounds[soundIndex];
+            float volume = PlayerPrefsController.GetSoundOn() != 0 ? sound.Volume : 0f;
+
+            AudioSource.PlayClipAtPoint(sound.Clip, position, volume);
         }
     }
 
     // Private methods
     private void AdjustMusicVolume()
     {
-        bool isSoundOn = PlayerPrefsController.GetSoundOn() != 0;
-        if (isSoundOn)
+        if (PlayerPrefsController.GetSoundOn() != 0)
         {
-            myAudioSource.volume = initialMusicVolume;
+            _audioSource.volume = _initialMusicVolume;
         }
         else
         {
-            myAudioSource.volume = 0f;
+            _audioSource.volume = 0f;
+        }
+    }
+
+    private IEnumerator FadeMusicCoroutine(float targetVolume, float time)
+    {
+        var timer = 0f;
+        var initialVolume = _audioSource.volume;
+
+        while (timer < time)
+        {
+            timer += Time.deltaTime;
+            _audioSource.volume = Mathf.Lerp(initialVolume, targetVolume, timer / time);
+            yield return new WaitForEndOfFrame();
         }
     }
 }

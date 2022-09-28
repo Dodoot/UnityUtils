@@ -1,17 +1,14 @@
 using UnityEngine;
 
-public class PlayerPrefsController : MonoBehaviour
+public static class PlayerPrefsController
 {
-    const string SOUND_ON_KEY = "sound on";
-    // const string DALTON_MODE_KEY = "dalton on";
+    private const string SOUND_ON_KEY = "sound on";
 
     public static int GetSoundOn() { return PlayerPrefs.GetInt(SOUND_ON_KEY, 1); }
-    // public static int GetDaltonMode() { return PlayerPrefs.GetInt(DALTON_MODE_KEY, 0); }
 
     public static void ResetAllPlayerPrefs()
     {
         PlayerPrefs.DeleteAll();
-        // todo reset all stuff in memory too
     }
 
     public static void SwitchSoundOn()
@@ -23,9 +20,4 @@ public class PlayerPrefsController : MonoBehaviour
     {
         PlayerPrefs.SetInt(SOUND_ON_KEY, newSoundOn);
     }
-
-    // public static void SetDaltonMode(int newDaltonMode)
-    // {
-    //     PlayerPrefs.SetInt(DALTON_MODE_KEY, newDaltonMode);
-    // }
 }
